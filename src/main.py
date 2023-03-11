@@ -19,12 +19,10 @@ def detect_aadharImage(liveImage: str, aadharImage: str):
     aadharImageFile = cv2.imdecode(aadharImage_arr, flags=cv2.IMREAD_COLOR)
 
     with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
-
-        image = cv2.imread(aadharImageFile)
-        height, width, c = image.shape
+        height, width, c = aadharImageFile.shape
 
         # Convert the BGR image to RGB and process it with MediaPipe Face Detection.
-        results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        results = face_detection.process(cv2.cvtColor(aadharImageFile, cv2.COLOR_BGR2RGB))
 
         if not results.detections:
             print('No faces detected.')
@@ -38,7 +36,7 @@ def detect_aadharImage(liveImage: str, aadharImage: str):
                     "ymax": int(bbox.height * height + bbox.ymin * height)
                 }
 
-        cropped_image = image.crop(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax)
+        cropped_image = aadharImageFile[bbox_points["ymin"] : bbox_points["ymax"], bbox_points["xmin"] : bbox_points["ymax"]].copy()
 
     result = detect_image(liveImage, cropped_image)
 
@@ -50,8 +48,8 @@ def detect_image(liveImage: str, aadharImage):
     liveImage_arr = np.frombuffer(decoded_liveImage_string, dtype=np.uint8)
     liveImageFile = cv2.imdecode(liveImage_arr, flags=cv2.IMREAD_COLOR)
 
-    known_image = face_recognition.load_image_file(aadharImage)
-    unknown_image = face_recognition.load_image_file(liveImageFile)
+    known_image = liveImageFile
+    unknown_image = aadharImage
 
     known_encoding = face_recognition.face_encodings(known_image)[0]
     unknown_encoding = face_recognition.face_encodings(unknown_image)[0]
